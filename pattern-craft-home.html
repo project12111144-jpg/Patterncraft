@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pattern Craft — Workspace</title>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+  :root{
+    --cream:#FCF6EC;
+    --ink:#2B2320;
+    --ink-soft:#7A6F63;
+    --blue:#5B6EF0;
+    --green:#3FAE68;
+    --orange:#E0954E;
+    --purple:#8B7FE6;
+    --line:#ECE0CE;
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+
+  body{
+    font-family:'Manrope', sans-serif;
+    background:var(--cream);
+    color:var(--ink);
+    min-height:100vh;
+    padding-bottom:78px;
+  }
+
+  a{ text-decoration:none; color:inherit; }
+
+  #loadingBox{
+    min-height:100vh;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .spinner{
+    width:34px; height:34px;
+    border:3px solid var(--line);
+    border-top-color:var(--blue);
+    border-radius:50%;
+    animation:spin 0.8s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  #appBox{ display:none; position:relative; overflow:hidden; }
+
+  .deco-blob{
+    position:absolute; top:0; left:0; right:0; height:340px;
+    background:radial-gradient(ellipse at 0% 0%, #F7E3CE 0%, transparent 55%),
+               radial-gradient(ellipse at 100% 10%, #E1EAFB 0%, transparent 50%);
+    z-index:0; pointer-events:none;
+  }
+  .spool-deco{
+    position:absolute; top:60px; right:18px; width:64px; z-index:0; opacity:0.95;
+  }
+
+  header{
+    position:relative; z-index:1;
+    display:flex; align-items:flex-start; justify-content:space-between;
+    padding:20px 20px 6px;
+  }
+  .icon-btn{
+    width:38px; height:38px;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--ink);
+    font-size:18px;
+    cursor:pointer;
+  }
+  .brand-center{ text-align:center; }
+  .needle-wrap{ display:flex; align-items:center; justify-content:center; gap:4px; }
+  .needle{ width:2px; height:26px; background:var(--ink); border-radius:2px; }
+  .logo-word{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size:32px;
+    background:linear-gradient(90deg, var(--purple), #E06F9B 30%, var(--orange) 60%, var(--blue));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .brand-name{
+    font-weight:700; font-size:12px; letter-spacing:5px; margin-top:2px;
+  }
+  .brand-tag{
+    font-size:8px; letter-spacing:2.5px; color:var(--ink-soft); margin-top:3px; text-transform:uppercase;
+  }
+
+  .welcome{ position:relative; z-index:1; padding:18px 22px 6px; }
+  .welcome .hi{ font-size:15px; color:var(--ink-soft); }
+  .welcome h1{
+    font-family:'Fraunces', serif;
+    font-size:27px; font-weight:700;
+    margin-top:2px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .sparkle{ color:var(--purple); font-size:18px; }
+  .welcome p{
+    font-size:13px; color:var(--ink-soft); margin-top:8px; line-height:1.5; max-width:280px;
+  }
+  .welcome p b{ color:var(--purple); font-weight:700; }
+
+  .actions{
+    position:relative; z-index:1;
+    display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;
+    padding:22px 20px 8px;
+  }
+  .action-card{
+    border-radius:20px;
+    padding:18px 10px 16px;
+    text-align:center;
+    cursor:pointer;
+  }
+  .action-card.blue{ background:#DCE1FB; }
+  .action-card.green{ background:#D9F0E1; }
+  .action-card.orange{ background:#FBE6D2; }
+
+  .action-icon{
+    width:46px; height:46px;
+    margin:0 auto 12px;
+    border-radius:14px;
+    background:rgba(255,255,255,0.55);
+    display:flex; align-items:center; justify-content:center;
+    font-size:20px;
+  }
+  .action-card h3{ font-size:13px; font-weight:700; margin-bottom:5px; }
+  .action-card.blue h3{ color:#3B4BC4; }
+  .action-card.green h3{ color:#227D45; }
+  .action-card.orange h3{ color:#B5661E; }
+  .action-card p{ font-size:10px; color:var(--ink-soft); line-height:1.4; margin-bottom:14px; min-height:26px; }
+
+  .action-btn{
+    width:32px; height:32px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    margin:0 auto;
+    color:#fff; font-size:17px; font-weight:700;
+    border:none;
+  }
+  .blue .action-btn{ background:var(--blue); }
+  .green .action-btn{ background:var(--green); }
+  .orange .action-btn{ background:var(--orange); }
+
+  .section{ position:relative; z-index:1; padding:26px 22px 0; }
+  .section-head{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:14px;
+  }
+  .section-head h2{ font-size:17px; font-weight:700; }
+  .section-head a{ font-size:12.5px; color:var(--purple); font-weight:700; }
+
+  .bp-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:14px;
+  }
+  .bp-card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:12px;
+  }
+  .bp-thumb{
+    width:100%; height:130px;
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:10px;
+  }
+  .bp-thumb svg{ width:88%; height:88%; }
+  .bp-card h4{ font-size:12px; font-weight:700; }
+  .bp-row{ display:flex; justify-content:space-between; align-items:center; margin-top:2px; }
+  .bp-row span{ font-size:10px; color:var(--ink-soft); }
+  .bp-dots{ color:var(--ink-soft); font-size:14px; }
+
+  .wrap{ max-width:480px; margin:0 auto; position:relative; }
+
+  .bottom-nav{
+    position:fixed; bottom:0; left:0; right:0;
+    background:#fff;
+    border-top:1px solid var(--line);
+    display:flex;
+    padding:10px 0 16px;
+    max-width:480px; margin:0 auto;
+    z-index:5;
+  }
+  .nav-item{
+    flex:1; text-align:center; font-size:11px; font-weight:700; color:var(--ink-soft);
+    display:flex; flex-direction:column; align-items:center; gap:5px;
+    cursor:pointer;
+  }
+  .nav-item.active{ color:var(--purple); }
+  .nav-icon-wrap{
+    width:36px; height:26px; border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px;
+  }
+  .nav-item.active .nav-icon-wrap{ background:#EAE6FB; }
+</style>
+</head>
+<body>
+
+<div id="loadingBox"><div class="spinner"></div></div>
+
+<div id="appBox">
+<div class="wrap">
+  <div class="deco-blob"></div>
+
+  <svg class="spool-deco" viewBox="0 0 64 90" fill="none">
+    <ellipse cx="32" cy="10" rx="26" ry="8" fill="#8B7FE6"/>
+    <rect x="10" y="10" width="44" height="60" fill="#9B8FF0"/>
+    <ellipse cx="32" cy="70" rx="26" ry="8" fill="#8B7FE6"/>
+    <ellipse cx="32" cy="10" rx="10" ry="4" fill="#FCF6EC"/>
+    <ellipse cx="32" cy="70" rx="10" ry="4" fill="#FCF6EC"/>
+    <circle cx="52" cy="82" r="12" fill="#F0B860"/>
+    <circle cx="47" cy="77" r="1.6" fill="#B5661E"/>
+    <circle cx="57" cy="77" r="1.6" fill="#B5661E"/>
+    <circle cx="47" cy="87" r="1.6" fill="#B5661E"/>
+    <circle cx="57" cy="87" r="1.6" fill="#B5661E"/>
+  </svg>
+
+  <header>
+    <div class="icon-btn">☰</div>
+    <div class="brand-center">
+      <div class="needle-wrap">
+        <div class="needle"></div>
+        <div class="logo-word">PCT</div>
+      </div>
+      <div class="brand-name">PATTERN&nbsp;CRAFT</div>
+      <div class="brand-tag">Design · Create · Print</div>
+    </div>
+    <div class="icon-btn">⚙</div>
+  </header>
+
+  <div class="welcome">
+    <div class="hi">Welcome back,</div>
+    <h1><span id="userName">Karigar</span> <span class="sparkle">✦</span></h1>
+    <p>Create beautiful shirt designs with precision &amp; <b>creativity</b>.</p>
+  </div>
+
+  <div class="actions">
+    <div class="action-card blue">
+      <div class="action-icon">📐</div>
+      <h3>New Blueprint</h3>
+      <p>Start a new shirt design</p>
+      <button class="action-btn">+</button>
+    </div>
+    <div class="action-card green">
+      <div class="action-icon">📂</div>
+      <h3>Open Blueprint</h3>
+      <p>Continue your saved designs</p>
+      <button class="action-btn">→</button>
+    </div>
+    <div class="action-card orange">
+      <div class="action-icon">👕</div>
+      <h3>Samples</h3>
+      <p>Explore ready-made shirt designs</p>
+      <button class="action-btn">👕</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>Recent Blueprints</h2>
+      <a href="#">View all ›</a>
+    </div>
+    <div class="bp-grid" id="bpGrid">
+      <!-- Blueprint cards inserted here -->
+    </div>
+  </div>
+
+  <div style="height:20px;"></div>
+
+</div>
+
+<div class="bottom-nav">
+  <div class="nav-item active">
+    <div class="nav-icon-wrap">🏠</div>
+    Workspace
+  </div>
+  <div class="nav-item">
+    <div class="nav-icon-wrap">👕</div>
+    Samples
+  </div>
+</div>
+
+</div>
+
+<script>
+  function shirtSVG(){
+    return `<svg viewBox="0 0 100 110" fill="none" stroke="#2B2320" stroke-width="1.3">
+      <path d="M35 8 L25 18 L10 26 L18 38 L28 33 L28 100 L72 100 L72 33 L82 38 L90 26 L75 18 L65 8 Q50 18 35 8 Z"/>
+      <path d="M40 8 Q50 20 60 8"/>
+      <line x1="50" y1="20" x2="50" y2="95"/>
+    </svg>`;
+  }
+
+  const blueprints = [
+    { name: 'Kurta Design 01', date: '16 Jul 2026' },
+    { name: 'Shirt Design 12', date: '15 Jul 2026' },
+    { name: 'Casual Shirt 05', date: '14 Jul 2026' },
+    { name: 'Party Wear 03', date: '12 Jul 2026' },
+  ];
+
+  const grid = document.getElementById('bpGrid');
+  blueprints.forEach(bp => {
+    const card = document.createElement('div');
+    card.className = 'bp-card';
+    card.innerHTML = `
+      <div class="bp-thumb">${shirtSVG()}</div>
+      <h4>${bp.name}</h4>
+      <div class="bp-row">
+        <span>${bp.date}</span>
+        <span class="bp-dots">⋯</span>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+</script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCD4WU_MFzrgwRxQtvLgk3DByCbGIDoH7I",
+    authDomain: "pattern-craft.firebaseapp.com",
+    projectId: "pattern-craft",
+    storageBucket: "pattern-craft.firebasestorage.app",
+    messagingSenderId: "461067400933",
+    appId: "1:461067400933:web:61b35d13dda8a1f5ba860c",
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      document.getElementById('loadingBox').style.display = 'none';
+      document.getElementById('appBox').style.display = 'block';
+      const name = user.displayName || user.email.split('@')[0];
+      document.getElementById('userName').textContent = name;
+    } else {
+      window.location.href = 'pattern-craft-signin-web.html';
+    }
+  });
+</script>
+
+</body>
+</html>

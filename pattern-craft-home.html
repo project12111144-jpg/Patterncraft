@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pattern Craft — Workspace</title>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+  :root{
+    --cream:#FBF3E7;
+    --cream-2:#F5E9D8;
+    --ink:#2B2320;
+    --ink-soft:#6B5F55;
+    --blue:#5B6EF0;
+    --green:#3FAE68;
+    --pink:#E06F9B;
+    --line:#E7D9C4;
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+
+  body{
+    font-family:'Manrope', sans-serif;
+    background:var(--cream);
+    color:var(--ink);
+    min-height:100vh;
+    padding-bottom:78px;
+  }
+
+  a{ text-decoration:none; color:inherit; }
+
+  /* Loading state */
+  #loadingBox{
+    min-height:100vh;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .spinner{
+    width:34px; height:34px;
+    border:3px solid var(--line);
+    border-top-color:var(--blue);
+    border-radius:50%;
+    animation:spin 0.8s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  #appBox{ display:none; }
+
+  /* Header */
+  header{
+    display:flex; align-items:flex-start; justify-content:space-between;
+    padding:20px 20px 6px;
+  }
+  .icon-btn{
+    width:38px; height:38px;
+    border-radius:12px;
+    background:#FFFDF9;
+    border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+  }
+  .brand-center{ text-align:center; }
+  .logo-word{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size:30px;
+    background:linear-gradient(90deg, #7C6FE0, var(--pink) 35%, #E0954E 65%, var(--blue));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .brand-name{
+    font-weight:700; font-size:11px; letter-spacing:4px; margin-top:2px;
+  }
+  .brand-tag{
+    font-size:8px; letter-spacing:2px; color:var(--ink-soft); margin-top:2px; text-transform:uppercase;
+  }
+
+  /* Welcome */
+  .welcome{ padding:18px 22px 6px; }
+  .welcome .hi{ font-size:14px; color:var(--ink-soft); }
+  .welcome h1{
+    font-family:'Fraunces', serif;
+    font-size:26px; font-weight:700;
+    margin-top:2px;
+  }
+  .welcome p{
+    font-size:12.5px; color:var(--ink-soft); margin-top:8px; line-height:1.5; max-width:280px;
+  }
+  .welcome p b{ color:var(--blue); font-weight:700; }
+
+  /* Action cards */
+  .actions{
+    display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;
+    padding:20px 20px 8px;
+  }
+  .action-card{
+    border-radius:20px;
+    padding:16px 10px 14px;
+    text-align:center;
+    cursor:pointer;
+    border:1px solid rgba(0,0,0,0.03);
+  }
+  .action-card.blue{ background:#E4E7FB; }
+  .action-card.green{ background:#E1F3E6; }
+  .action-card.pink{ background:#FBE6ED; }
+
+  .action-icon{
+    width:44px; height:44px;
+    margin:0 auto 10px;
+    border-radius:14px;
+    background:rgba(255,255,255,0.7);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .action-card h3{ font-size:12.5px; font-weight:700; margin-bottom:4px; }
+  .action-card.blue h3{ color:#3B4BC4; }
+  .action-card.green h3{ color:#227D45; }
+  .action-card.pink h3{ color:#C24571; }
+  .action-card p{ font-size:9.5px; color:var(--ink-soft); line-height:1.35; margin-bottom:12px; min-height:24px; }
+
+  .action-btn{
+    width:30px; height:30px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    margin:0 auto;
+    color:#fff; font-size:16px; font-weight:700;
+    border:none;
+  }
+  .blue .action-btn{ background:var(--blue); }
+  .green .action-btn{ background:var(--green); }
+  .pink .action-btn{ background:var(--pink); }
+
+  /* Section headers */
+  .section{ padding:22px 22px 0; }
+  .section-head{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:12px;
+  }
+  .section-head h2{ font-size:16.5px; font-weight:700; }
+  .section-head a{ font-size:12px; color:var(--blue); font-weight:700; }
+
+  /* Blueprints scroll */
+  .bp-scroll{
+    display:flex; gap:12px; overflow-x:auto; padding-bottom:6px;
+    -webkit-overflow-scrolling:touch;
+  }
+  .bp-card{
+    flex:0 0 130px;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:10px;
+  }
+  .bp-thumb{
+    width:100%; height:110px;
+    background:#FAFAF7;
+    border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:8px;
+  }
+  .bp-card h4{ font-size:11.5px; font-weight:700; }
+  .bp-card span{ font-size:9.5px; color:var(--ink-soft); }
+  .empty-note{
+    font-size:12px; color:var(--ink-soft);
+    background:#fff; border:1px dashed var(--line); border-radius:14px;
+    padding:16px; text-align:center;
+  }
+
+  /* Quick tools */
+  .tools-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:10px;
+  }
+  .tool-card{
+    background:#fff; border:1px solid var(--line); border-radius:16px;
+    padding:16px 10px; text-align:center;
+  }
+  .tool-icon{ font-size:20px; margin-bottom:8px; }
+  .tool-card span{ font-size:11.5px; font-weight:700; }
+
+  /* Bottom nav */
+  .bottom-nav{
+    position:fixed; bottom:0; left:0; right:0;
+    background:#fff;
+    border-top:1px solid var(--line);
+    display:flex;
+    padding:10px 0 16px;
+    max-width:480px; margin:0 auto;
+  }
+  .nav-item{
+    flex:1; text-align:center; font-size:10.5px; font-weight:700; color:var(--ink-soft);
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    cursor:pointer;
+  }
+  .nav-item.active{ color:var(--blue); }
+  .nav-item .nav-icon-wrap{
+    width:34px; height:26px; border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .nav-item.active .nav-icon-wrap{ background:#E4E7FB; }
+
+  .wrap{ max-width:480px; margin:0 auto; }
+</style>
+</head>
+<body>
+
+<div id="loadingBox"><div class="spinner"></div></div>
+
+<div id="appBox">
+<div class="wrap">
+
+  <header>
+    <div class="icon-btn">☰</div>
+    <div class="brand-center">
+      <div class="logo-word">PCT</div>
+      <div class="brand-name">PATTERN&nbsp;CRAFT</div>
+      <div class="brand-tag">Design · Create · Print</div>
+    </div>
+    <div class="icon-btn">⚙</div>
+  </header>
+
+  <div class="welcome">
+    <div class="hi">Welcome back,</div>
+    <h1 id="userName">Karigar</h1>
+    <p>Create beautiful shirt designs with precision &amp; <b>creativity</b>.</p>
+  </div>
+
+  <div class="actions">
+    <div class="action-card blue">
+      <div class="action-icon">✏️</div>
+      <h3>New Blueprint</h3>
+      <p>Start a new shirt design</p>
+      <button class="action-btn">+</button>
+    </div>
+    <div class="action-card green">
+      <div class="action-icon">📂</div>
+      <h3>Open Last</h3>
+      <p>Continue your last edited design</p>
+      <button class="action-btn">→</button>
+    </div>
+    <div class="action-card pink">
+      <div class="action-icon">📄</div>
+      <h3>PDF</h3>
+      <p>View all saved blueprints</p>
+      <button class="action-btn">⇩</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>Recent Blueprints</h2>
+      <a href="#">View all ›</a>
+    </div>
+    <div class="empty-note">
+      Abhi koi blueprint save nahi hua. Naya design banate hi yahan dikhega.
+    </div>
+  </div>
+
+  <div class="section" style="margin-top:22px;">
+    <div class="section-head">
+      <h2>Quick Tools</h2>
+    </div>
+    <div class="tools-grid">
+      <div class="tool-card"><div class="tool-icon">👕</div><span>Templates</span></div>
+      <div class="tool-card"><div class="tool-icon">🥋</div><span>Collar Library</span></div>
+      <div class="tool-card"><div class="tool-icon">👝</div><span>Pocket Library</span></div>
+      <div class="tool-card"><div class="tool-icon">🧵</div><span>Cuff Library</span></div>
+    </div>
+  </div>
+
+  <div style="height:20px;"></div>
+
+</div>
+
+<div class="bottom-nav">
+  <div class="nav-item active">
+    <div class="nav-icon-wrap">🏠</div>
+    Workspace
+  </div>
+  <div class="nav-item">
+    <div class="nav-icon-wrap">👕</div>
+    Samples
+  </div>
+  <div class="nav-item">
+    <div class="nav-icon-wrap">📊</div>
+    Live XL
+  </div>
+</div>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCD4WU_MFzrgwRxQtvLgk3DByCbGIDoH7I",
+    authDomain: "pattern-craft.firebaseapp.com",
+    projectId: "pattern-craft",
+    storageBucket: "pattern-craft.firebasestorage.app",
+    messagingSenderId: "461067400933",
+    appId: "1:461067400933:web:61b35d13dda8a1f5ba860c",
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      document.getElementById('loadingBox').style.display = 'none';
+      document.getElementById('appBox').style.display = 'block';
+      const name = user.displayName || user.email.split('@')[0];
+      document.getElementById('userName').textContent = name;
+    } else {
+      // login nahi hai, wapas sign-in page par bhejo
+      window.location.href = 'pattern-craft-signin-web-1.html';
+    }
+  });
+</script>
+
+</body>
+</html>

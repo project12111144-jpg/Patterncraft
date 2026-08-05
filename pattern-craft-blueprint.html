@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pattern Craft — New Blueprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1c2340;
+    --sub:#5b6478;
+    --purple:#5B47E0;
+    --line:#e9ecf7;
+    --canvas:#FBF6EC;
+    --grid:#E9DFC7;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;
+    height:100%;
+    font-family:'Inter',sans-serif;
+    background:#eef1fb;
+    color:var(--ink);
+    overflow:hidden;
+  }
+  .screen{
+    display:flex;
+    flex-direction:column;
+    height:100vh;
+  }
+
+  /* ---------- TOP BAR ---------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:14px 16px;
+    background:#fff;
+    border-bottom:1px solid var(--line);
+    flex-shrink:0;
+  }
+  .icon-btn{
+    width:38px;height:38px;
+    border-radius:11px;
+    border:1px solid var(--line);
+    background:#fff;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--ink);
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .title-block{ flex:1; min-width:0; }
+  .title-block h1{
+    font-family:'Poppins',sans-serif;
+    font-size:17px;
+    font-weight:600;
+    margin:0;
+    line-height:1.25;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .title-block p{
+    font-size:12px;
+    color:var(--sub);
+    margin:1px 0 0;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .save-btn{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:var(--purple);
+    color:#fff;
+    border:none;
+    padding:10px 18px;
+    border-radius:12px;
+    font-family:'Inter',sans-serif;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    flex-shrink:0;
+    box-shadow:0 8px 18px -8px rgba(91,71,224,0.55);
+  }
+
+  /* ---------- CANVAS ---------- */
+  .canvas-wrap{
+    position:relative;
+    flex:1;
+    min-height:0;
+    background:#f2ede0;
+    overflow:hidden;
+    touch-action:none;
+    -webkit-user-select:none;
+    user-select:none;
+    cursor:grab;
+  }
+  .canvas-wrap.panning{ cursor:grabbing; }
+  .canvas-surface{
+    position:absolute;
+    top:0; left:0;
+    width:5000px;
+    height:5000px;
+    background:
+      linear-gradient(var(--grid) 1px, transparent 1px) 0 0/28px 28px,
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/28px 28px,
+      var(--canvas);
+    transform-origin:0 0;
+    will-change:transform;
+  }
+
+  /* zoom controls */
+  .zoom-controls{
+    position:absolute;
+    right:14px;
+    bottom:16px;
+    display:flex;
+    align-items:center;
+    background:#fff;
+    border-radius:30px;
+    box-shadow:0 10px 24px rgba(20,20,50,0.12);
+    padding:6px;
+    gap:2px;
+    z-index:5;
+  }
+  .zoom-controls button{
+    width:34px;height:34px;
+    border:none;
+    background:transparent;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--ink);
+    cursor:pointer;
+    border-radius:10px;
+    font-size:16px;
+    font-weight:700;
+  }
+  .zoom-controls button:hover{ background:#f2f3fa; }
+  .zoom-label{
+    font-size:12px;
+    font-weight:700;
+    color:var(--sub);
+    width:44px;
+    text-align:center;
+    flex-shrink:0;
+    cursor:pointer;
+  }
+
+  /* right vertical toolbar */
+  .toolbar{
+    position:absolute;
+    top:16px;
+    right:14px;
+    bottom:16px;
+    width:78px;
+    background:#fff;
+    border-radius:20px;
+    box-shadow:0 12px 30px rgba(20,20,50,0.10);
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    padding:10px 6px;
+    gap:2px;
+    overflow-y:auto;
+    z-index:5;
+  }
+  .tool{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:5px;
+    padding:10px 4px;
+    border-radius:14px;
+    cursor:pointer;
+    color:var(--sub);
+    flex-shrink:0;
+  }
+  .tool.active{
+    background:#EFEBFE;
+    color:var(--purple);
+  }
+  .tool svg{ flex-shrink:0; }
+  .tool span{
+    font-size:10.5px;
+    font-weight:600;
+    text-align:center;
+    line-height:1.15;
+  }
+
+  /* undo/redo pill */
+  .undo-pill{
+    position:absolute;
+    left:16px;
+    bottom:16px;
+    display:flex;
+    align-items:center;
+    background:#fff;
+    border-radius:30px;
+    box-shadow:0 10px 24px rgba(20,20,50,0.12);
+    padding:10px 8px;
+    gap:6px;
+    z-index:5;
+  }
+  .undo-pill button{
+    width:34px;height:34px;
+    border:none;
+    background:transparent;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--ink);
+    cursor:pointer;
+    border-radius:10px;
+  }
+  .undo-pill button:disabled{ color:#c2c8d9; cursor:default; }
+  .undo-pill .sep{
+    width:1px;height:20px;
+    background:var(--line);
+  }
+
+  /* ---------- LIBRARY PANEL ---------- */
+  .library{
+    flex-shrink:0;
+    background:#fff;
+    border-top:1px solid var(--line);
+    padding:16px 16px 20px;
+  }
+  .library-scroll{
+    display:flex;
+    gap:14px;
+    overflow-x:auto;
+    padding-bottom:2px;
+  }
+  .lib-item{
+    flex-shrink:0;
+    width:104px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+    cursor:pointer;
+  }
+  .lib-folder{
+    width:100%;
+    height:88px;
+    border-radius:14px;
+    border:1.5px solid var(--line);
+    background:#fbfbfe;
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .lib-folder::before{
+    content:'';
+    position:absolute;
+    top:-7px; left:14px;
+    width:34px; height:9px;
+    background:#fbfbfe;
+    border:1.5px solid var(--line);
+    border-bottom:none;
+    border-radius:6px 6px 0 0;
+  }
+  .lib-item span{
+    font-family:'Poppins',sans-serif;
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--ink);
+  }
+
+  @media (max-width:600px){
+    .toolbar{ width:64px; }
+    .tool span{ font-size:9px; }
+    .lib-item{ width:84px; }
+    .lib-folder{ height:72px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="screen">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="icon-btn" id="backBtn" title="Back">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <div class="title-block">
+      <h1>New Blueprint</h1>
+      <p>Create your shirt design</p>
+    </div>
+    <button class="save-btn" id="saveBtn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Save
+    </button>
+    <div class="icon-btn" title="More options">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="5" r="1.1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.1" fill="currentColor" stroke="none"/></svg>
+    </div>
+  </div>
+
+  <!-- CANVAS -->
+  <div class="canvas-wrap" id="canvasWrap">
+    <div class="canvas-surface" id="canvasSurface"></div>
+
+
+    <!-- RIGHT TOOLBAR -->
+    <div class="toolbar" id="toolbar">
+      <div class="tool active" data-tool="select">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 3l7.07 17 2.51-7.39L21 10.07z"/></svg>
+        <span>Select</span>
+      </div>
+      <div class="tool" data-tool="fillzone">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2l3 5-8 8-5-5z"/><path d="M7 15l-4 4a2 2 0 002.8 2.8l4-4"/><path d="M13 7l6 6"/></svg>
+        <span>Fill Zone</span>
+      </div>
+      <div class="tool" data-tool="color">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21c4-4.5 7-8 7-11.5A7 7 0 005 9.5C5 13 8 16.5 12 21z"/></svg>
+        <span>Color</span>
+      </div>
+      <div class="tool" data-tool="fabric">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+        <span>Fabric</span>
+      </div>
+      <div class="tool" data-tool="draw">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/></svg>
+        <span>Draw</span>
+      </div>
+      <div class="tool" data-tool="smartpencil">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+        <span>Smart Pencil</span>
+      </div>
+      <div class="tool" data-tool="eraser">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M20 20H8l-6-6a2 2 0 010-2.8l9-9a2 2 0 012.8 0l6.2 6.2a2 2 0 010 2.8L13 18"/><path d="M6.5 11.5l6 6"/></svg>
+        <span>Eraser</span>
+      </div>
+      <div class="tool" data-tool="text">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+        <span>Text</span>
+      </div>
+      <div class="tool" data-tool="more">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+        <span>More</span>
+      </div>
+    </div>
+
+    <!-- UNDO / REDO -->
+    <div class="undo-pill">
+      <button id="undoBtn" title="Undo" disabled>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M4 9h10.5a5.5 5.5 0 015.5 5.5v0a5.5 5.5 0 01-5.5 5.5H11"/></svg>
+      </button>
+      <div class="sep"></div>
+      <button id="redoBtn" title="Redo" disabled>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 14 20 9 15 4"/><path d="M20 9H9.5A5.5 5.5 0 004 14.5v0A5.5 5.5 0 009.5 20H13"/></svg>
+      </button>
+    </div>
+
+    <!-- ZOOM CONTROLS -->
+    <div class="zoom-controls">
+      <button id="zoomOutBtn" title="Zoom out">–</button>
+      <span class="zoom-label" id="zoomLabel" title="Reset zoom">100%</span>
+      <button id="zoomInBtn" title="Zoom in">+</button>
+    </div>
+  </div>
+
+  <!-- LIBRARY PANEL -->
+  <div class="library">
+    <div class="library-scroll" id="libraryScroll">
+      <div class="lib-item" data-lib="body">
+        <div class="lib-folder">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#1c2340" stroke-width="1.6" stroke-linejoin="round"><path d="M8 3L3 6l2 4 2-1v11h10V9l2 1 2-4-5-3-1.5 1.5a3 3 0 01-3 0z"/></svg>
+        </div>
+        <span>Body</span>
+      </div>
+      <div class="lib-item" data-lib="pockets">
+        <div class="lib-folder">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#1c2340" stroke-width="1.6" stroke-linejoin="round"><path d="M5 4h14v9a5 5 0 01-5 5H10a5 5 0 01-5-5V4z"/></svg>
+        </div>
+        <span>Pockets</span>
+      </div>
+      <div class="lib-item" data-lib="collars">
+        <div class="lib-folder">
+          <svg width="34" height="30" viewBox="0 0 24 24" fill="none" stroke="#1c2340" stroke-width="1.6" stroke-linejoin="round"><path d="M4 5l8 6 8-6"/><path d="M4 5l8 15 8-15"/></svg>
+        </div>
+        <span>Collars</span>
+      </div>
+      <div class="lib-item" data-lib="cuffs">
+        <div class="lib-folder">
+          <svg width="34" height="26" viewBox="0 0 24 24" fill="none" stroke="#1c2340" stroke-width="1.6" stroke-linejoin="round"><rect x="3" y="8" width="18" height="8" rx="2"/><line x1="7" y1="8" x2="7" y2="16"/><line x1="17" y1="8" x2="17" y2="16"/></svg>
+        </div>
+        <span>Cuffs</span>
+      </div>
+      <div class="lib-item" data-lib="stitch">
+        <div class="lib-folder">
+          <svg width="36" height="20" viewBox="0 0 36 20" fill="none" stroke="#1c2340" stroke-width="1.7" stroke-linecap="round"><line x1="2" y1="6" x2="8" y2="6"/><line x1="12" y1="6" x2="18" y2="6"/><line x1="22" y1="6" x2="28" y2="6"/><line x1="32" y1="6" x2="34" y2="6"/><line x1="2" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="18" y2="14"/><line x1="22" y1="14" x2="28" y2="14"/><line x1="32" y1="14" x2="34" y2="14"/></svg>
+        </div>
+        <span>Stitch</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Back button -> home
+  document.getElementById('backBtn').addEventListener('click', () => {
+    window.location.href = 'pattern-craft-home.html?v=' + Date.now();
+  });
+
+  // Toolbar tool selection (visual only for now — actual drawing logic aayega baad mein)
+  document.querySelectorAll('.tool').forEach(el => {
+    el.addEventListener('click', () => {
+      document.querySelectorAll('.tool').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+    });
+  });
+
+  // Save button placeholder
+  document.getElementById('saveBtn').addEventListener('click', () => {
+    alert('Blueprint save hone ka feature abhi jud raha hai.');
+  });
+
+  // ---------- CANVAS ZOOM + PAN ----------
+  const wrap = document.getElementById('canvasWrap');
+  const surface = document.getElementById('canvasSurface');
+  const zoomLabel = document.getElementById('zoomLabel');
+  const SURFACE_SIZE = 5000;
+  const MIN_SCALE = 0.35;
+  const MAX_SCALE = 3;
+
+  let scale = 1, tx = 0, ty = 0;
+
+  function applyTransform(){
+    surface.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+    zoomLabel.textContent = Math.round(scale * 100) + '%';
+  }
+
+  function centerCanvas(){
+    const r = wrap.getBoundingClientRect();
+    tx = (r.width - SURFACE_SIZE * scale) / 2;
+    ty = (r.height - SURFACE_SIZE * scale) / 2;
+    applyTransform();
+  }
+
+  function zoomAt(clientX, clientY, factor){
+    const r = wrap.getBoundingClientRect();
+    const px = clientX - r.left;
+    const py = clientY - r.top;
+    const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale * factor));
+    if(newScale === scale) return;
+    const ratio = newScale / scale;
+    tx = px - (px - tx) * ratio;
+    ty = py - (py - ty) * ratio;
+    scale = newScale;
+    applyTransform();
+  }
+
+  // mouse wheel zoom (also handles trackpad pinch which fires wheel + ctrlKey)
+  wrap.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const factor = e.deltaY < 0 ? 1.1 : 0.9;
+    zoomAt(e.clientX, e.clientY, factor);
+  }, { passive:false });
+
+  // pointer-based pan + pinch-zoom (works for mouse drag and touch)
+  const activePointers = new Map();
+  let panStart = null;
+  let lastPinchDist = null;
+
+  function isInteractive(target){
+    return target.closest('.toolbar, .undo-pill, .zoom-controls');
+  }
+
+  wrap.addEventListener('pointerdown', (e) => {
+    if(isInteractive(e.target)) return;
+    wrap.setPointerCapture(e.pointerId);
+    activePointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+    if(activePointers.size === 1){
+      panStart = { x:e.clientX, y:e.clientY, tx, ty };
+      wrap.classList.add('panning');
+    } else if(activePointers.size === 2){
+      const pts = [...activePointers.values()];
+      lastPinchDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+    }
+  });
+
+  wrap.addEventListener('pointermove', (e) => {
+    if(!activePointers.has(e.pointerId)) return;
+    activePointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+
+    if(activePointers.size === 2){
+      const pts = [...activePointers.values()];
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      const midX = (pts[0].x + pts[1].x) / 2;
+      const midY = (pts[0].y + pts[1].y) / 2;
+      if(lastPinchDist){
+        zoomAt(midX, midY, dist / lastPinchDist);
+      }
+      lastPinchDist = dist;
+    } else if(activePointers.size === 1 && panStart){
+      tx = panStart.tx + (e.clientX - panStart.x);
+      ty = panStart.ty + (e.clientY - panStart.y);
+      applyTransform();
+    }
+  });
+
+  function releasePointer(e){
+    activePointers.delete(e.pointerId);
+    wrap.classList.remove('panning');
+    if(activePointers.size < 2) lastPinchDist = null;
+    if(activePointers.size === 1){
+      const [remaining] = [...activePointers.values()];
+      panStart = { x:remaining.x, y:remaining.y, tx, ty };
+      wrap.classList.add('panning');
+    } else if(activePointers.size === 0){
+      panStart = null;
+    }
+  }
+  wrap.addEventListener('pointerup', releasePointer);
+  wrap.addEventListener('pointercancel', releasePointer);
+
+  // zoom buttons
+  document.getElementById('zoomInBtn').addEventListener('click', () => {
+    const r = wrap.getBoundingClientRect();
+    zoomAt(r.left + r.width/2, r.top + r.height/2, 1.2);
+  });
+  document.getElementById('zoomOutBtn').addEventListener('click', () => {
+    const r = wrap.getBoundingClientRect();
+    zoomAt(r.left + r.width/2, r.top + r.height/2, 1/1.2);
+  });
+  zoomLabel.addEventListener('click', () => {
+    scale = 1;
+    centerCanvas();
+  });
+
+  window.addEventListener('resize', centerCanvas);
+  centerCanvas();
+</script>
+
+</body>
+</html>

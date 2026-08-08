@@ -213,6 +213,32 @@
     border:1px solid #e9ecf7;
     aspect-ratio:1/1;
     width:100%;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-end;
+    padding:10px;
+    cursor:pointer;
+    overflow:hidden;
+  }
+  .bp-card .bp-name{
+    font-weight:600;
+    font-size:12px;
+    color:#1c2340;
+    margin:0 0 2px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .bp-card .bp-date{
+    font-size:10.5px;
+    color:#9aa2b5;
+  }
+  .bp-card.bp-empty-hint{
+    align-items:center;
+    justify-content:center;
+    color:#c2c8d9;
+    font-size:11px;
+    text-align:center;
   }
 
 
@@ -476,7 +502,7 @@
       </div>
     </div>
 
-    <div class="card green-card">
+    <div class="card green-card" id="openLastCard" style="cursor:pointer;">
       <div class="card-icon">
         <svg width="72" height="72" viewBox="0 0 80 80" fill="none">
           <path d="M22 18 h14l6 6h16a4 4 0 014 4v6H18v-12a4 4 0 014-4z" fill="#6fd19a"/>
@@ -550,48 +576,4 @@
       </div>
       <div class="feature-item">
         <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="#e0356b" stroke-width="1.6"><path d="M6 9V3h12v6"/><path d="M6 18h12v3H6z"/><path d="M4 9h16a2 2 0 012 2v6h-4v-3H6v3H2v-6a2 2 0 012-2z"/></svg>
-        <div><h4>Print Ready Patterns</h4><p>Generate high quality, print-ready patterns with perfect alignment.</p></div>
-      </div>
-      <div class="feature-item">
-        <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="1.6"><path d="M14 3v5a1 1 0 001 1h5"/><path d="M6 3h8l5 5v12a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z"/><text x="12" y="17" font-size="6" fill="#8b5cf6" stroke="none" text-anchor="middle" font-weight="700">PDF</text></svg>
-        <div><h4>Save &amp; Export as PDF</h4><p>Save unlimited blueprints and export them as PDF anytime you need.</p></div>
-      </div>
-      <div class="feature-item">
-        <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="#3b6fe0" stroke-width="1.6"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
-        <div><h4>Store &amp; Reuse Designs</h4><p>Store unlimited blueprints, reuse your designs and customize every detail.</p></div>
-      </div>
-    </div>
-  </section>
-
-  <footer>
-    <div>© Pattern Craft 2026</div>
-    <div class="center">Crafted with precision for perfect patterns
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="#8b5cf6"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 10-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 000-7.8z"/></svg>
-    </div>
-    <div>v1.0.0</div>
-  </footer>
-</div>
-
-<!-- BOTTOM NAV -->
-<div class="bottom-nav">
-  <div class="nav-item active">
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
-    Workspace
-  </div>
-  <div class="nav-divider"></div>
-  <div class="nav-item">
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
-    Samples
-  </div>
-</div>
-
-<script>
-  const grid = document.getElementById('bpGrid');
-  for(let i=0;i<6;i++){
-    const el = document.createElement('div');
-    el.className = 'bp-card';
-    grid.appendChild(el);
-  }
-</script>
-</body>
-</html>
+        <div><h4>Print Ready Patterns</h4><p>Generate high qu

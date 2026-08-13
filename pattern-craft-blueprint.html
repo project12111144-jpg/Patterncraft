@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pattern Craft — New Blueprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1c2340;
+    --sub:#5b6478;
+    --purple:#5B47E0;
+    --line:#e9ecf7;
+    --canvas:#FBF6EC;
+    --grid:#E9DFC7;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;
+    height:100%;
+    font-family:'Inter',sans-serif;
+    background:#eef1fb;
+    color:var(--ink);
+    overflow:hidden;
+  }
+  .screen{
+    display:flex;
+    flex-direction:column;
+    height:100vh;
+    height:100dvh;
+    overflow-y:auto;
+  }
+
+  /* ---------- TOP BAR ---------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:14px 16px;
+    background:#fff;
+    border-bottom:1px solid var(--line);
+    flex-shrink:0;
+  }
+  .icon-btn{
+    width:38px;height:38px;
+    border-radius:11px;
+    border:1px solid var(--line);
+    background:#fff;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--ink);
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .title-block{ flex:1; min-width:0; }
+  .title-block h1{
+    font-family:'Poppins',sans-serif;
+    font-size:17px;
+    font-weight:600;
+    margin:0;
+    line-height:1.25;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .title-block p{
+    font-size:12px;
+    color:var(--sub);
+    margin:1px 0 0;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .save-btn{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:var(--purple);
+    color:#fff;
+    border:none;
+    padding:10px 18px;
+    border-radius:12px;
+    font-family:'Inter',sans-serif;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    flex-shrink:0;
+    box-shadow:0 8px 18px -8px rgba(91,71,224,0.55);
+  }
+  .save-btn:disabled{
+    opacity:0.55;
+    cursor:default;
+    box-shadow:none;
+  }
+
+  .more-menu{
+    position:absolute;
+    top:44px;
+    right:0;
+    background:#fff;
+    border-radius:12px;
+    border:1px solid var(--line);
+    box-shadow:0 12px 30px rgba(20,20,50,0.16);
+    padding:6px;
+    display:none;
+    flex-direction:column;
+    min-width:170px;
+    z-index:30;
+  }
+  .more-menu.open{ display:flex; }
+  .more-menu-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 12px;
+    border-radius:9px;
+    font-size:13.5px;
+    font-weight:600;
+    color:var(--ink);
+    cursor:pointer;
+  }
+  .more-menu-item:active{ background:#F2F1FA; }
+
+  /* ---------- CANVAS ---------- */
+  .canvas-wrap{
+    position:relative;
+    flex:1;
+    min-height:0;
+    background:#f2ede0;
+    overflow:hidden;
+    touch-action:none;
+    -webkit-user-select:none;
+    user-select:none;
+    cursor:grab;
+  }
+  .canvas-wrap.panning{ cursor:grabbing; }
+  .canvas-surface{
+    position:absolute;
+    top:0; left:0;
+    width:5000px;
+    height:5000px;
+    background:
+      linear-gradient(var(--grid) 1px, transparent 1px) 0 0/28px 28px,
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/28px 28px,
+      var(--canvas);
+    transform-origin:0 0;
+    will-change:transform;
+  }
+  .blank-page-fill{
+    width:100%;
+    height:100%;
+    background:#fff;
+    border-radius:0;
+    box-shadow:0 10px 34px rgba(30,30,60,0.18), 0 0 0 1px rgba(30,30,60,0.06);
+  }
+
+  /* ---------- PLACED CANVAS ITEMS (move / resize / rotate / delete) ---------- */
+  .pc-item{
+    position:absolute;
+    touch-action:none;
+  }
+  .pc-item-content{
+    width:100%;
+    height:100%;
+    cursor:move;
+  }
+  .pc-item-content img{
+    width:100%;
+    height:100%;
+    display:block;
+    object-fit:contain;
+    pointer-events:none;
+  }
+  .pc-item.selected .pc-item-content{
+    outline:2px dashed #E53935;
+    outline-offset:4px;
+  }
+  .pc-handle{
+    position:absolute;
+    width:28px;height:28px;
+    border-radius:50%;
+    background:#fff;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    font-size:14px;
+    font-weight:700;
+    z-index:2;
+    line-height:1;
+  }
+  .pc-item.selected .pc-handle{ display:flex; }
+
+  /* Locked item: sirf lock handle dikhega, baaki sab handles chhup jayenge */
+  .pc-item.locked.selected .pc-handle-delete,
+  .pc-item.locked.selected .pc-handle-rotate,
+  .pc-item.locked.selected .pc-handle-resize{
+    display:none !important;
+  }
+  .pc-item.locked .pc-item-content{ cursor:default; }
+
+  .pc-handle-delete{
+    top:-14px; right:-14px;
+    border:2px solid #E0356B;
+    background:#E0356B;
+    color:#fff;
+    cursor:pointer;
+  }
+  .pc-handle-rotate{
+    top:-42px; left:50%;
+    transform:translateX(-50%);
+    border:2px solid #E8940C;
+    color:#E8940C;
+    cursor:grab;
+  }
+  .pc-handle-lock{
+    top:-42px; left:50%;
+    transform:translateX(calc(-50% + 40px));
+    border:2px solid #E8940C;
+    color:#E8940C;
+    cursor:pointer;
+    font-size:13px;
+  }
+  .pc-handle-resize{
+    width:24px; height:24px;
+    border:2px solid #E53935;
+    color:#E53935;
+    cursor:pointer;
+  }
+  .pc-handle-resize-nw{ top:-13px; left:-13px; cursor:nwse-resize; }
+  .pc-handle-resize-ne{ top:-13px; right:-13px; cursor:nesw-resize; }
+  .pc-handle-resize-sw{ bottom:-13px; left:-13px; cursor:nesw-resize; }
+  .pc-handle-resize-se{ bottom:-13px; right:-13px; cursor:nwse-resize; }
+
+  /* zoom controls */
+  .zoom-controls{
+    position:absolute;
+    right:14px;
+    bottom:16px;
+    display:flex;
+    align-items:center;
+    background:#fff;
+    border-radius:30px;
+    box-shadow:0 10px 24px rgba(20,20,50,0.12);
+    padding:6px;
+    gap:2px;
+    z-index:5;
+  }
+  .zoom-controls button{
+    width:34px;height:34px;
+    border:none;
+    background:transparent;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--ink);
+    cursor:pointer;
+    border-radius:10px;
+    font-size:16px;
+    font-weight:700;
+  }
+  .zoom-controls button:hover{ background:#f2f3fa; }
+  .zoom-label{
+    font-size:12px;
+    font-weight:700;
+    color:var(--sub);
+    width:44px;
+    text-align:center;
+    flex-shrink:0;
+    cursor:pointer;
+  }
+
+  /* right vertical toolbar */
+  .toolbar{
+    position:absolute;
+    top:16px;
+    right:14px;
+    bottom:16px;
+    width:78px;
+    background:#fff;
+    border-radius:20px;
+    box-shadow:0 12px 30px rgba(20,20,50,0.10);
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    padding:10px 6px;
+    gap:2px;
+    overflow-y:auto;
+    touch-action:pan-y;
+    overscroll-behavior:contain;
+    z-index:5;
+  }
+  .tool{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:5px;
+    padding:10px 4px;
+    border-radius:14px;
+    cursor:pointer;
+    color:var(--sub);
+    flex-shrink:0;
+  }
+  .tool.active{
+    background:#EFEBFE;
+    color:var(--purple);
+  }
+  .tool svg{ flex-shrink:0; }
+
+  .tool-group{ flex-shrink:0; }
+  .tool-group .tool{ width:100%; }
+  .subtools{
+    display:none;
+    flex-direction:column;
+    gap:2px;
+    background:#F7F6FD;
+    border-radius:12px;
+    padding:4px;
+    margin:0 2px 4px;
+  }
+  .tool-group.open .subtools{ display:flex; }
+  .tool-group.open > .tool{
+    background:#EFEBFE;
+    color:var(--purple);
+  }
+  .subtools .tool{ padding:8px 4px; }
+  .tool span{
+    font-size:10.5px;
+    font-weight:600;
+    text-align:center;
+    line-height:1.15;
+  }
+
+  /* undo/redo pill */
+  .undo-pill{
+    position:absolute;
+    left:16px;
+    bottom:16px;
+    display:flex;
+    align-items:center;
+    background:#fff;
+    border-radius:30px;
+    box-shadow:0 10px 24px rgba(20,20,50,0.12);
+    padding:10px 8px;
+    gap:6px;
+    z-index:5;
+  }
+  .undo-pill button{
+    width:34px;height:34px;
+    border:none;
+    background:transparent;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--ink);
+    cursor:pointer;
+    border-radius:10px;
+  }
+  .undo-pill button:disabled{ color:#c2c8d9; cursor:default; }
+  .undo-pill .sep{
+    width:1px;height:20px;
+    background:var(--line);
+  }
+
+  /* ---------- LIBRARY PANEL ---------- */
+  .library{
+    flex-shrink:0;
+    background:#fff;
+    border-top:1px solid var(--line);
+    padding:12px 16px 14px;
+  }
+  .library-scroll{
+    display:flex;
+    gap:14px;
+    overflow-x:auto;
+    padding-bottom:2px;
+  }
+  .lib-item{
+    flex-shrink:0;
+    width:96px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    cursor:pointer;
+  }
+  .lib-folder{
+    width:100%;
+    height:72px;
+    border-radius:14px;
+    border:1.5px solid var(--line);
+    background:#fbfbfe;
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .lib-folder::before{
+    content:'';
+    position:absolute;
+    top:-7px; left:14px;
+    width:34px; height:9px;
+    background:#fbfbfe;
+    border:1.5px solid var(--line);
+    border-bottom:none;
+    border-radius:6px 6px 0 0;
+  }
+  .lib-item span{
+    font-family:'Poppins',sans-serif;
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--ink);
+  }
+
+  /* ---------- BOTTOM SHEET (library panel) ---------- */
+  .sheet-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(20,20,40,0.28);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .25s;
+    z-index:20;
+  }
+  .sheet-overlay.open{ opacity:1; pointer-events:auto; }
+
+  .bottom-sheet{
+    position:fixed;
+    left:0; right:0; bottom:0;
+    height:42vh;
+    background:#fff;
+    border-radius:22px 22px 0 0;
+    box-shadow:0 -12px 34px rgba(20,20,50,0.18);
+    transform:translateY(100%);
+    transition:transform .28s ease;
+    z-index:21;
+    display:flex;
+    flex-direction:column;
+  }
+  .bottom-sheet.open{ transform:translateY(0); }
+  .sheet-handle{
+    width:38px;height:4px;
+    background:var(--line);
+    border-radius:3px;
+    margin:10px auto 4px;
+    flex-shrink:0;
+  }
+  .sheet-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:6px 18px 12px;
+    border-bottom:1px solid var(--line);
+    flex-shrink:0;
+  }
+  .sheet-header h3{
+    font-family:'Poppins',sans-serif;
+    font-size:15.5px;
+    margin:0;
+  }
+  .sheet-close{
+    width:30px;height:30px;
+    border-radius:9px;
+    border:1px solid var(--line);
+    background:#fff;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--sub);
+    cursor:pointer;
+  }
+  .sheet-body{
+    flex:1;
+    min-height:0;
+    overflow-y:auto;
+    padding:16px 18px 20px;
+  }
+  .sheet-empty{
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    color:var(--sub);
+    font-size:13px;
+    line-height:1.6;
+  }
+  .sheet-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(84px, 1fr));
+    gap:12px;
+  }
+  .sheet-grid-item{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    cursor:pointer;
+    padding:8px 4px;
+    border-radius:12px;
+    border:1.5px solid var(--line);
+    background:#fbfbfe;
+  }
+  .sheet-grid-item:active{ background:#F2F1FA; border-color:var(--purple); }
+  .sheet-grid-item img{
+    width:100%;
+    height:64px;
+    object-fit:contain;
+  }
+  .sheet-grid-item span{
+    font-size:10.5px;
+    color:var(--sub);
+    text-align:center;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:100%;
+  }
+
+  @media (max-width:600px){
+    .toolbar{ width:64px; }
+    .tool span{ font-size:9px; }
+    .lib-item{ width:84px; }
+    .lib-folder{ height:72px; }
+  }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+<div class="screen">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="icon-btn" id="backBtn" title="Back">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <div class="title-block">
+      <h1 id="blueprintTitle">New Blueprint</h1>
+      <p>Create your shirt design</p>
+    </div>
+    <button class="save-btn" id="saveBtn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Save
+    </button>
+    <div class="icon-btn" id="moreBtn" title="More options" style="position:relative;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="5" r="1.1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.1" fill="currentColor" stroke="none"/></svg>
+      <div class="more-menu" id="moreMenu">
+        <div class="more-menu-item" id="exportPdfBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5a1 1 0 001 1h5"/><path d="M6 3h8l5 5v12a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg>
+          Export as PDF
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CANVAS -->
+  <div class="canvas-wrap" id="canvasWrap">
+    <div class="canvas-surface" id="canvasSurface"></div>
+
+
+    <!-- RIGHT TOOLBAR -->
+    <div class="toolbar" id="toolbar">
+
+      <div class="tool-group" id="fillZoneGroup">
+        <div class="tool" data-tool="fillzone" data-group="fillZoneGroup">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2l3 5-8 8-5-5z"/><path d="M7 15l-4 4a2 2 0 002.8 2.8l4-4"/><path d="M13 7l6 6"/></svg>
+          <span>Fill Zone</span>
+        </div>
+        <div class="subtools">
+          <div class="tool active" data-tool="select">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 3l7.07 17 2.51-7.39L21 10.07z"/></svg>
+            <span>Select</span>
+          </div>
+          <div class="tool" data-tool="color">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21c4-4.5 7-8 7-11.5A7 7 0 005 9.5C5 13 8 16.5 12 21z"/></svg>
+            <span>Color</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tool" data-tool="blankpage" id="blankPageBtn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="1.5"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/></svg>
+        <span>New Page</span>
+      </div>
+
+      <div class="tool-group" id="drawGroup">
+        <div class="tool" data-tool="draw" data-group="drawGroup">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/></svg>
+          <span>Draw</span>
+        </div>
+        <div class="subtools">
+          <div class="tool" data-tool="smartpencil">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+            <span>Smart Pencil</span>
+          </div>
+          <div class="tool" data-tool="eraser">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M20 20H8l-6-6a2 2 0 010-2.8l9-9a2 2 0 012.8 0l6.2 6.2a2 2 0 010 2.8L13 18"/><path d="M6.5 11.5l6 6"/></svg>
+            <span>Eraser</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tool" data-tool="text">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+        <span>Text</span>
+      </div>
+      <div class="tool" data-tool="more">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+        <span>More</span>
+      </div>
+    </div>
+
+    <!-- UNDO / REDO -->
+    <div class="undo-pill">
+      <button id="undoBtn" title="Undo" disabled>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M4 9h10.5a5.5 5.5 0 015.5 5.5v0a5.5 5.5 0 01-5.5 5.5H11"/></svg>
+      </button>
+      <div class="sep"></div>
+      <button id="redoBtn" title="Redo" disabled>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 14 20 9 15 4"/><path d="M20 9H9.5A5.5 5.5 0 004 14.5v0A5.5 5.5 0 009.5 20H13"/></svg>
+      </button>
+    </div>
+
+    <!-- ZOOM CONTROLS -->
+    <div class="zoom-controls">
+      <button id="zoomOutBtn" title="Zoom out">–</button>
+      <span class="zoom-label" id="zoomLabel" title="Reset zoom">100%</span>
+      <button id="zoomInBtn" title="Zoom in">+</button>
+    </div>
+  </div>
+
+  <!-- LIBRARY PANEL -->
+  <div class="library">
+    <div class="library-scroll" id="libraryScroll">
+      <div class="lib-item" data-lib="body">
+        <div class="lib-folder">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#1c2340" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4Q12 6.4 15 4L19.5 7.2L17 10.5L15 9V19.5Q15 20.5 14 20.5H10Q9 20.5 9 19.5V9L7 10.5L4.5 7.2Z"/></svg>
+        </div>
+        <span>Body</span>
+      </div>
+      <div class="lib-item" data-lib="pockets">
+        <div class="lib-folder">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1c2340" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4H19V13Q19 19.5 12 20.5Q5 19.5 5 13Z"/></svg>
+        </div>
+        <span>Pockets</span>
+      </div>
+      <div class="lib-item" data-lib="collars">
+        <div class="lib-folder">
+          <svg width="32" height="22" viewBox="0 0 24 24" fill="none" stroke="#1c2340" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12Q7 6 3.5 8Q3.5 13 12 12Q17 6 20.5 8Q20.5 13 12 12Z"/><circle cx="12" cy="12" r="1" fill="#1c2340" stroke="none"/></svg>
+        </div>
+        <span>Collars</span>
+      </div>
+      <div class="lib-item" data-lib="cuffs">
+        <div class="lib-folder">
+          <svg width="32" height="22" viewBox="0 0 24 24" fill="none" stroke="#1c2340" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="12" height="8" rx="4"/><ellipse cx="16.5" cy="12" rx="3" ry="4.2"/></svg>
+        </div>
+        <span>Cuffs</span>
+      </div>
+      <div class="lib-item" data-lib="placket">
+        <div class="lib-folder">
+          <svg width="18" height="30" viewBox="0 0 24 24" fill="none" stroke="#1c2340" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="8" height="18" rx="1.5"/><circle cx="12" cy="7.5" r="0.9" fill="#1c2340" stroke="none"/><circle cx="12" cy="12" r="0.9" fill="#1c2340" stroke="none"/><circle cx="12" cy="16.5" r="0.9" fill="#1c2340" stroke="none"/></svg>
+        </div>
+        <span>Placket</span>
+      </div>
+      <div class="lib-item" data-lib="stitch">
+        <div class="lib-folder">
+          <svg width="36" height="20" viewBox="0 0 36 20" fill="none" stroke="#1c2340" stroke-width="1.7" stroke-linecap="round"><line x1="2" y1="6" x2="8" y2="6"/><line x1="12" y1="6" x2="18" y2="6"/><line x1="22" y1="6" x2="28" y2="6"/><line x1="32" y1="6" x2="34" y2="6"/><line x1="2" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="18" y2="14"/><line x1="22" y1="14" x2="28" y2="14"/><line x1="32" y1="14" x2="34" y2="14"/></svg>
+        </div>
+        <span>Stitch</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM SHEET (library content panel) -->
+  <div class="sheet-overlay" id="sheetOverlay"></div>
+  <div class="bottom-sheet" id="bottomSheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <h3 id="sheetTitle">Body</h3>
+      <div class="sheet-close" id="sheetClose">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>
+    </div>
+    <div class="sheet-body">
+      <div class="sheet-empty" id="sheetEmpty">Items yahan jald hi aayenge.</div>
+      <div class="sheet-grid" id="sheetGrid" style="display:none;"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Back button -> home
+  document.getElementById('backBtn').addEventListener('click', () => {
+    window.location.href = 'pattern-craft-home.html?v=' + Date.now();
+  });
+
+  // Toolbar tool selection (visual only for now — actual drawing logic aayega baad mein)
+  document.querySelectorAll('.toolbar .tool').forEach(el => {
+    el.addEventListener('click', (e) => {
+      const groupName = el.dataset.group;
+
+      // Agar ye ek group-header hai (Fill Zone / Draw) to expand/collapse karo
+      if(groupName){
+        const group = document.getElementById(groupName);
+        const wasOpen = group.classList.contains('open');
+        document.querySelectorAll('.tool-group').forEach(g => g.classList.remove('open'));
+        if(!wasOpen) group.classList.add('open');
+        return;
+      }
+
+      // "New Page" button ka apna alag kaam hai (blank sheet banana), select highlight nahi
+      if(el.dataset.tool === 'blankpage'){
+        addBlankPage();
+        return;
+      }
+
+      document.querySelectorAll('.toolbar .tool').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+    });
+  });
+
+  // "New Page" — canvas ke current center me ek safed square sheet daalta hai design banane ke liye
+  let pageCount = 0;
+  function addBlankPage(){
+    pageCount++;
+    const r = wrap.getBoundingClientRect();
+    const centerX = (r.width / 2 - tx) / scale;
+    const centerY = (r.height / 2 - ty) / scale;
+    const size = 340;
+    makeCanvasItem({
+      left: centerX - size / 2 + pageCount * 18,
+      top: centerY - size / 2 + pageCount * 18,
+      width: size,
+      height: size,
+      innerHTML: '<div class="blank-page-fill"></div>'
+    });
+  }
+
+  // Save button ka asli logic (Firestore) sabse neeche module script me hai
+
+  // ---------- MORE MENU + PDF EXPORT ----------
+  const moreBtn = document.getElementById('moreBtn');
+  const moreMenu = document.getElementById('moreMenu');
+  const exportPdfBtn = document.getElementById('exportPdfBtn');
+
+  moreBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    moreMenu.classList.toggle('open');
+  });
+  document.addEventListener('click', () => moreMenu.classList.remove('open'));
+
+  exportPdfBtn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    moreMenu.classList.remove('open');
+    await exportBlueprintAsPDF();
+  });
+
+  async function exportBlueprintAsPDF(){
+    const items = Array.from(document.querySelectorAll('#canvasSurface > .pc-item'));
+    if(items.length === 0){
+      alert('PDF banane ke liye pehle canvas par kuch add karein.');
+      return;
+    }
+
+    exportPdfBtn.innerHTML = 'Preparing...';
+
+    // Sabhi items ka bounding box nikaalte hain (thoda padding ke saath)
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    items.forEach(it => {
+      const l = parseFloat(it.style.left) || 0;
+      const t = parseFloat(it.style.top) || 0;
+      const w = it.offsetWidth, h = it.offsetHeight;
+      minX = Math.min(minX, l); minY = Math.min(minY, t);
+      maxX = Math.max(maxX, l + w); maxY = Math.max(maxY, t + h);
+    });
+    const pad = 40;
+    minX -= pad; minY -= pad; maxX += pad; maxY += pad;
+
+    deselectAllItems();
+
+    // Capture ke liye surface ko temporarily scale(1) par le aate hain, taaki crisp/sahi size mile
+    const prevTransform = surface.style.transform;
+    surface.style.transform = 'translate(0px, 0px) scale(1)';
+    await new Promise(r => setTimeout(r, 60));
+
+    try {
+      const captured = await html2canvas(surface, {
+        x: minX, y: minY,
+        width: maxX - minX, height: maxY - minY,
+        backgroundColor: '#FBF6EC',
+        scale: 2,
+        useCORS: true
+      });
+
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({
+        orientation: captured.width > captured.height ? 'landscape' : 'portrait',
+        unit: 'px',
+        format: [captured.width, captured.height]
+      });
+      pdf.addImage(captured.toDataURL('image/png'), 'PNG', 0, 0, captured.width, captured.height);
+
+      const name = (document.getElementById('blueprintTitle').textContent || 'blueprint').trim();
+      pdf.save(name + '.pdf');
+    } catch(err){
+      alert('PDF banane me dikkat aayi: ' + err.message);
+    } finally {
+      surface.style.transform = prevTransform;
+      exportPdfBtn.innerHTML =
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5a1 1 0 001 1h5"/><path d="M6 3h8l5 5v12a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg>Export as PDF';
+    }
+  }
+
+  // ---------- BOTTOM SHEET (Body / Pockets / Collars / Cuffs / Placket) ----------
+  // Stitch ko abhi chhod diya hai, jaisa bataya gaya
+  const sheetOverlay = document.getElementById('sheetOverlay');
+  const bottomSheet = document.getElementById('bottomSheet');
+  const sheetTitle = document.getElementById('sheetTitle');
+  const sheetEmpty = document.getElementById('sheetEmpty');
+  const sheetGrid = document.getElementById('sheetGrid');
+
+  const libLabels = {
+    body: 'Body',
+    pockets: 'Pockets',
+    collars: 'Collars',
+    cuffs: 'Cuffs',
+    placket: 'Placket'
+  };
+
+  // GitHub repo details — jahan har category ka apna folder hai (assets/<category>/)
+  const GH_USER = 'project12111144-jpg';
+  const GH_REPO = 'Patterncraft';
+  const GH_BRANCH = 'main';
+
+  const libraryCache = {}; // category -> [{name, url}]
+  let fullTreeCache = null; // poori repo ki file-tree — jsDelivr se sirf ek baar fetch hoti hai
+
+  async function fetchLibraryItems(category){
+    if(libraryCache[category]) return libraryCache[category];
+
+    // jsDelivr CDN se poori repo ki file list ek hi baar leke cache kar lete hain —
+    // ye GitHub ke seedhe API se kahin zyada reliable hai, koi tight rate-limit nahi (production ke liye bhi safe)
+    if(!fullTreeCache){
+      const res = await fetch(`https://data.jsdelivr.com/v1/packages/gh/${GH_USER}/${GH_REPO}@${GH_BRANCH}`);
+      if(!res.ok) throw new Error('jsDelivr se file list nahi mili');
+      fullTreeCache = await res.json();
+    }
+
+    const assetsDir = (fullTreeCache.files || []).find(f => f.name === 'assets' && f.type === 'directory');
+    const catDir = assetsDir && (assetsDir.files || []).find(f => f.name === category && f.type === 'directory');
+    const files = catDir ? catDir.files : [];
+
+    const items = files
+      .filter(f => f.type === 'file' && /\.(svg|png|jpg|jpeg)$/i.test(f.name))
+      .map(f => ({
+        name: f.name.replace(/\.(svg|png|jpg|jpeg)$/i, '').replace(/[-_]/g, ' '),
+        url: `https://cdn.jsdelivr.net/gh/${GH_USER}/${GH_REPO}@${GH_BRANCH}/assets/${category}/${f.name}`
+      }));
+    libraryCache[category] = items;
+    return items;
+  }
+
+  async function openSheet(libKey){
+    sheetTitle.textContent = libLabels[libKey] || libKey;
+    sheetOverlay.classList.add('open');
+    bottomSheet.classList.add('open');
+
+    sheetGrid.style.display = 'none';
+    sheetEmpty.style.display = 'flex';
+    sheetEmpty.textContent = 'Load ho raha hai...';
+
+    try {
+      const items = await fetchLibraryItems(libKey);
+      if(items.length === 0){
+        sheetEmpty.textContent = 'Abhi is category me koi SVG nahi hai. GitHub ke assets/' + libKey + '/ folder me SVG daal dijiye.';
+        sheetEmpty.style.display = 'flex';
+        sheetGrid.style.display = 'none';
+        return;
+      }
+      sheetGrid.innerHTML = '';
+      items.forEach(item => {
+        const el = document.createElement('div');
+        el.className = 'sheet-grid-item';
+        el.innerHTML = `<img src="${item.url}" alt="${item.name}"><span>${item.name}</span>`;
+        el.addEventListener('click', () => {
+          addLibraryItemToCanvas(item);
+          closeSheet();
+        });
+        sheetGrid.appendChild(el);
+      });
+      sheetEmpty.style.display = 'none';
+      sheetGrid.style.display = 'grid';
+    } catch(err){
+      sheetEmpty.textContent = 'Load nahi ho paya. GitHub par assets/' + libKey + '/ folder bana hai ya nahi check karein.';
+      sheetEmpty.style.display = 'flex';
+      sheetGrid.style.display = 'none';
+    }
+  }
+
+  function closeSheet(){
+    sheetOverlay.classList.remove('open');
+    bottomSheet.classList.remove('open');
+  }
+
+  document.querySelectorAll('.lib-item').forEach(item => {
+    const key = item.dataset.lib;
+    if(key === 'stitch') return; // Stitch abhi ke liye chhoda hai
+    item.addEventListener('click', () => openSheet(key));
+  });
+
+  sheetOverlay.addEventListener('click', closeSheet);
+  document.getElementById('sheetClose').addEventListener('click', closeSheet);
+
+  // Library se select kiya hua SVG canvas ke center me daalna
+  let itemCount = 0;
+  function addLibraryItemToCanvas(item){
+    itemCount++;
+    const r = wrap.getBoundingClientRect();
+    const centerX = (r.width / 2 - tx) / scale;
+    const centerY = (r.height / 2 - ty) / scale;
+    const size = 320;
+    makeCanvasItem({
+      left: centerX - size / 2 + itemCount * 16,
+      top: centerY - size / 2 + itemCount * 16,
+      width: size,
+      height: size,
+      innerHTML: `<img src="${item.url}" alt="${item.name}">`
+    });
+  }
+
+  // ---------- PLACED ITEMS: select / move / resize / rotate / delete ----------
+  let selectedItem = null;
+
+  function deselectAllItems(){
+    document.querySelectorAll('.pc-item.selected').forEach(el => el.classList.remove('selected'));
+    selectedItem = null;
+  }
+
+  function selectItem(item){
+    deselectAllItems();
+    item.classList.add('selected');
+    selectedItem = item;
+  }
+
+  function makeCanvasItem({ left, top, width, height, innerHTML }){
+    const item = document.createElement('div');
+    item.className = 'pc-item';
+    item.style.left = left + 'px';
+    item.style.top = top + 'px';
+    item.style.width = width + 'px';
+    item.style.height = height + 'px';
+    item.dataset.rotation = '0';
+    item.dataset.locked = 'false';
+    item.innerHTML =
+      `<div class="pc-item-content">${innerHTML}</div>` +
+      `<div class="pc-handle pc-handle-rotate" title="Rotate">⟳</div>` +
+      `<div class="pc-handle pc-handle-lock" title="Lock">🔓</div>` +
+      `<div class="pc-handle pc-handle-resize pc-handle-resize-nw" title="Resize"></div>` +
+      `<div class="pc-handle pc-handle-resize pc-handle-resize-ne" title="Resize"></div>` +
+      `<div class="pc-handle pc-handle-resize pc-handle-resize-sw" title="Resize"></div>` +
+      `<div class="pc-handle pc-handle-resize pc-handle-resize-se" title="Resize"></div>` +
+      `<div class="pc-handle pc-handle-delete" title="Delete">✕</div>`;
+    surface.appendChild(item);
+    attachItemInteractions(item);
+    selectItem(item);
+    return item;
+  }
+
+  function attachItemInteractions(item){
+    const content = item.querySelector('.pc-item-content');
+    const delBtn = item.querySelector('.pc-handle-delete');
+    const rotHandle = item.querySelector('.pc-handle-rotate');
+    const lockBtn = item.querySelector('.pc-handle-lock');
+    const resizeHandles = {
+      nw: item.querySelector('.pc-handle-resize-nw'),
+      ne: item.querySelector('.pc-handle-resize-ne'),
+      sw: item.querySelector('.pc-handle-resize-sw'),
+      se: item.querySelector('.pc-handle-resize-se')
+    };
+
+    function isLocked(){ return item.dataset.locked === 'true'; }
+
+    // --- MOVE (sirf jab item pehle se selected ho — turant drag) ---
+    // Agar item selected NAHI hai, to yahan kuch nahi karte — event ko wrap tak jaane dete hain,
+    // taaki us par background pan ho sake. Unselected item ko select karne ka (stationary long-press)
+    // logic wrap-level par centrally handle hota hai (neeche CANVAS ZOOM+PAN section me).
+    let dragArmed = false;
+    let moveStart = null;
+
+    content.addEventListener('pointerdown', (e) => {
+      if(!(item.classList.contains('selected') && !isLocked())) return; // background ko event dene do
+      e.stopPropagation();
+      content.setPointerCapture(e.pointerId);
+      dragArmed = true;
+      moveStart = { x: e.clientX, y: e.clientY, left: parseFloat(item.style.left), top: parseFloat(item.style.top) };
+    });
+
+    content.addEventListener('pointermove', (e) => {
+      if(!dragArmed || !moveStart) return;
+      const dx = (e.clientX - moveStart.x) / scale;
+      const dy = (e.clientY - moveStart.y) / scale;
+      item.style.left = (moveStart.left + dx) + 'px';
+      item.style.top = (moveStart.top + dy) + 'px';
+    });
+
+    function endPress(){
+      moveStart = null;
+      dragArmed = false;
+    }
+    content.addEventListener('pointerup', endPress);
+    content.addEventListener('pointercancel', endPress);
+
+    // --- DELETE ---
+    delBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+    delBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      item.remove();
+      if(selectedItem === item) selectedItem = null;
+    });
+
+    // --- LOCK / UNLOCK ---
+    lockBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+    lockBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const locked = !isLocked();
+      item.dataset.locked = locked ? 'true' : 'false';
+      item.classList.toggle('locked', locked);
+      lockBtn.textContent = locked ? '🔒' : '🔓';
+    });
+
+    // --- RESIZE (chaaron corners, red, width/height bilkul independent — lamba ya chauda kuch bhi ho sakta hai) ---
+    function attachCornerResize(handle, corner){
+      let start = null;
+      const MIN = 30;
+      handle.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        if(isLocked()) return;
+        handle.setPointerCapture(e.pointerId);
+        start = {
+          x: e.clientX, y: e.clientY,
+          left: parseFloat(item.style.left), top: parseFloat(item.style.top),
+          w: item.offsetWidth, h: item.offsetHeight
+        };
+      });
+      handle.addEventListener('pointermove', (e) => {
+        if(!start) return;
+        const dx = (e.clientX - start.x) / scale;
+        const dy = (e.clientY - start.y) / scale;
+        let newW = start.w, newH = start.h, newLeft = start.left, newTop = start.top;
+        if(corner === 'se'){ newW = start.w + dx; newH = start.h + dy; }
+        else if(corner === 'nw'){ newW = start.w - dx; newH = start.h - dy; }
+        else if(corner === 'ne'){ newW = start.w + dx; newH = start.h - dy; }
+        else if(corner === 'sw'){ newW = start.w - dx; newH = start.h + dy; }
+        newW = Math.max(MIN, newW);
+        newH = Math.max(MIN, newH);
+        if(corner === 'nw'){ newLeft = start.left + (start.w - newW); newTop = start.top + (start.h - newH); }
+        else if(corner === 'ne'){ newTop = start.top + (start.h - newH); }
+        else if(corner === 'sw'){ newLeft = start.left + (start.w - newW); }
+        item.style.width = newW + 'px';
+        item.style.height = newH + 'px';
+        item.style.left = newLeft + 'px';
+        item.style.top = newTop + 'px';
+      });
+      handle.addEventListener('pointerup', () => { start = null; });
+      handle.addEventListener('pointercancel', () => { start = null; });
+    }
+    attachCornerResize(resizeHandles.nw, 'nw');
+    attachCornerResize(resizeHandles.ne, 'ne');
+    attachCornerResize(resizeHandles.sw, 'sw');
+    attachCornerResize(resizeHandles.se, 'se');
+
+    // --- ROTATE (top handle, drag around center) ---
+    let rotateStart = null;
+    rotHandle.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      if(isLocked()) return;
+      rotHandle.setPointerCapture(e.pointerId);
+      const rect = item.getBoundingClientRect();
+      rotateStart = {
+        cx: rect.left + rect.width / 2,
+        cy: rect.top + rect.height / 2,
+        startRotation: parseFloat(item.dataset.rotation) || 0
+      };
+      rotateStart.initialAngle = Math.atan2(e.clientY - rotateStart.cy, e.clientX - rotateStart.cx) * 180 / Math.PI;
+    });
+    rotHandle.addEventListener('pointermove', (e) => {
+      if(!rotateStart) return;
+      const angle = Math.atan2(e.clientY - rotateStart.cy, e.clientX - rotateStart.cx) * 180 / Math.PI;
+      const newRotation = rotateStart.startRotation + (angle - rotateStart.initialAngle);
+      item.dataset.rotation = newRotation;
+      item.style.transform = `rotate(${newRotation}deg)`;
+    });
+    rotHandle.addEventListener('pointerup', () => { rotateStart = null; });
+    rotHandle.addEventListener('pointercancel', () => { rotateStart = null; });
+  }
+
+  // ---------- CANVAS ZOOM + PAN ----------
+  const wrap = document.getElementById('canvasWrap');
+  const surface = document.getElementById('canvasSurface');
+  const zoomLabel = document.getElementById('zoomLabel');
+  const SURFACE_SIZE = 5000;
+  const MIN_SCALE = 0.35;
+  const MAX_SCALE = 3;
+
+  let scale = 1, tx = 0, ty = 0;
+
+  function applyTransform(){
+    surface.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+    zoomLabel.textContent = Math.round(scale * 100) + '%';
+  }
+
+  function centerCanvas(){
+    const r = wrap.getBoundingClientRect();
+    tx = (r.width - SURFACE_SIZE * scale) / 2;
+    ty = (r.height - SURFACE_SIZE * scale) / 2;
+    applyTransform();
+  }
+
+  function zoomAt(clientX, clientY, factor){
+    const r = wrap.getBoundingClientRect();
+    const px = clientX - r.left;
+    const py = clientY - r.top;
+    const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale * factor));
+    if(newScale === scale) return;
+    const ratio = newScale / scale;
+    tx = px - (px - tx) * ratio;
+    ty = py - (py - ty) * ratio;
+    scale = newScale;
+    applyTransform();
+  }
+
+  // mouse wheel zoom (also handles trackpad pinch which fires wheel + ctrlKey)
+  wrap.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const factor = e.deltaY < 0 ? 1.1 : 0.9;
+    zoomAt(e.clientX, e.clientY, factor);
+  }, { passive:false });
+
+  // pointer-based pan + pinch-zoom (works for mouse drag and touch)
+  const activePointers = new Map();
+  let panStart = null;
+  let lastPinchDist = null;
+  const TAP_MOVE_THRESHOLD = 8; // itne px se kam hile to hi ye "click" maana jaayega, warna drag/pan
+
+  let tapCandidate = null; // { item, x, y, pointerId } — sirf tab set hota hai jab ek-ungli se kisi item par touch shuru ho
+
+  wrap.addEventListener('pointerdown', (e) => {
+    if(e.target.closest('.toolbar, .undo-pill, .zoom-controls')) return;
+
+    const pcItem = e.target.closest('.pc-item');
+    // Pehle se selected item ke content/handles apna kaam khud stopPropagation se sambhalte hain,
+    // isliye wo event yahan tak pahunchega hi nahi. Yahan jo bhi aaya wo ya to khaali canvas hai,
+    // ya koi UNSELECTED item — dono jagah background turant pan hona chahiye.
+    deselectAllItems();
+
+    wrap.setPointerCapture(e.pointerId);
+    activePointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+    if(activePointers.size === 1){
+      panStart = { x:e.clientX, y:e.clientY, tx, ty };
+      wrap.classList.add('panning');
+      // Sirf tab select karne ka "candidate" banate hain jab ye genuinely ek click ho (drag nahi)
+      tapCandidate = pcItem ? { item: pcItem, x: e.clientX, y: e.clientY, pointerId: e.pointerId } : null;
+    } else if(activePointers.size === 2){
+      const pts = [...activePointers.values()];
+      lastPinchDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      tapCandidate = null; // dusri ungli aa gayi, ab pinch hai — tap nahi
+    }
+  });
+
+  wrap.addEventListener('pointermove', (e) => {
+    if(!activePointers.has(e.pointerId)) return;
+    activePointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+
+    if(activePointers.size === 2){
+      const pts = [...activePointers.values()];
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      const midX = (pts[0].x + pts[1].x) / 2;
+      const midY = (pts[0].y + pts[1].y) / 2;
+      if(lastPinchDist){
+        zoomAt(midX, midY, dist / lastPinchDist);
+      }
+      lastPinchDist = dist;
+    } else if(activePointers.size === 1 && panStart){
+      tx = panStart.tx + (e.clientX - panStart.x);
+      ty = panStart.ty + (e.clientY - panStart.y);
+      applyTransform();
+      // Ungli itni hil chuki hai ki ye ab "drag/pan" hai, "click" nahi — select candidate hata do
+      if(tapCandidate && tapCandidate.pointerId === e.pointerId){
+        const dist = Math.hypot(e.clientX - tapCandidate.x, e.clientY - tapCandidate.y);
+        if(dist > TAP_MOVE_THRESHOLD) tapCandidate = null;
+      }
+    }
+  });
+
+  function releasePointer(e){
+    // Agar ungli bina hile hi uthi hai (genuine click) aur wo kisi item par thi, to ab select karo
+    if(tapCandidate && tapCandidate.pointerId === e.pointerId){
+      const dist = Math.hypot(e.clientX - tapCandidate.x, e.clientY - tapCandidate.y);
+      if(dist <= TAP_MOVE_THRESHOLD) selectItem(tapCandidate.item);
+    }
+    tapCandidate = null;
+
+    activePointers.delete(e.pointerId);
+    wrap.classList.remove('panning');
+    if(activePointers.size < 2) lastPinchDist = null;
+    if(activePointers.size === 1){
+      const [remaining] = [...activePointers.values()];
+      panStart = { x:remaining.x, y:remaining.y, tx, ty };
+      wrap.classList.add('panning');
+    } else if(activePointers.size === 0){
+      panStart = null;
+    }
+  }
+  wrap.addEventListener('pointerup', releasePointer);
+  wrap.addEventListener('pointercancel', releasePointer);
+
+  // zoom buttons
+  document.getElementById('zoomInBtn').addEventListener('click', () => {
+    const r = wrap.getBoundingClientRect();
+    zoomAt(r.left + r.width/2, r.top + r.height/2, 1.2);
+  });
+  document.getElementById('zoomOutBtn').addEventListener('click', () => {
+    const r = wrap.getBoundingClientRect();
+    zoomAt(r.left + r.width/2, r.top + r.height/2, 1/1.2);
+  });
+  zoomLabel.addEventListener('click', () => {
+    scale = 1;
+    centerCanvas();
+  });
+
+  window.addEventListener('resize', centerCanvas);
+  centerCanvas();
+</script>
+
+<!-- Firebase: Auth-check + Firestore Save/Load -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import {
+    getFirestore, doc, getDoc, addDoc, updateDoc, collection, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCD4WU_MFzrgwRxQtvLgk3DByCbGIDoH7I",
+    authDomain: "pattern-craft.firebaseapp.com",
+    projectId: "pattern-craft",
+    storageBucket: "pattern-craft.firebasestorage.app",
+    messagingSenderId: "461067400933",
+    appId: "1:461067400933:web:61b35d13dda8a1f5ba860c",
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const saveBtn = document.getElementById('saveBtn');
+  const titleEl = document.getElementById('blueprintTitle');
+
+  const urlParams = new URLSearchParams(window.location.search);
+  let currentBlueprintId = urlParams.get('id') || null;
+  const shouldAutoExport = urlParams.get('autoexport') === '1';
+  let currentBlueprintName = null;
+  let currentUser = null;
+
+  saveBtn.disabled = true;
+
+  onAuthStateChanged(auth, async (user) => {
+    if(!user){
+      // Sign-in kiye bina blueprint editor kholna allowed nahi
+      window.location.href = 'pattern-craft-signin-web.html?v=' + Date.now();
+      return;
+    }
+    currentUser = user;
+    saveBtn.disabled = false;
+
+    if(currentBlueprintId){
+      await loadBlueprint(currentBlueprintId);
+      if(shouldAutoExport && window.exportBlueprintAsPDF){
+        await window.exportBlueprintAsPDF();
+      }
+    }
+  });
+
+  // Saved item ko wapas canvas par banata hai (window.makeCanvasItem classic script me define hai)
+  function restoreItem(saved){
+    const innerHTML = saved.kind === 'image'
+      ? `<img src="${saved.imgSrc}" alt="${saved.imgAlt || ''}">`
+      : '<div class="blank-page-fill"></div>';
+    const item = window.makeCanvasItem({
+      left: saved.left, top: saved.top, width: saved.width, height: saved.height, innerHTML
+    });
+    if(saved.rotation){
+      item.dataset.rotation = saved.rotation;
+      item.style.transform = `rotate(${saved.rotation}deg)`;
+    }
+    if(saved.locked){
+      item.dataset.locked = 'true';
+      item.classList.add('locked');
+      const lockBtn = item.querySelector('.pc-handle-lock');
+      if(lockBtn) lockBtn.textContent = '🔒';
+    }
+  }
+
+  async function loadBlueprint(id){
+    try {
+      const snap = await getDoc(doc(db, 'users', currentUser.uid, 'blueprints', id));
+      if(!snap.exists()){
+        alert('Ye blueprint nahi mila.');
+        return;
+      }
+      const data = snap.data();
+      currentBlueprintName = data.name || 'Untitled Blueprint';
+      titleEl.textContent = currentBlueprintName;
+      (data.items || []).forEach(restoreItem);
+    } catch(err){
+      alert('Blueprint load nahi ho paya: ' + err.message);
+    }
+  }
+
+  function serializeCanvas(){
+    const items = [];
+    document.querySelectorAll('#canvasSurface > .pc-item').forEach(item => {
+      const img = item.querySelector('.pc-item-content img');
+      items.push({
+        kind: img ? 'image' : 'blank',
+        imgSrc: img ? img.getAttribute('src') : null,
+        imgAlt: img ? img.getAttribute('alt') : null,
+        left: parseFloat(item.style.left) || 0,
+        top: parseFloat(item.style.top) || 0,
+        width: item.offsetWidth,
+        height: item.offsetHeight,
+        rotation: parseFloat(item.dataset.rotation) || 0,
+        locked: item.dataset.locked === 'true'
+      });
+    });
+    return items;
+  }
+
+  saveBtn.addEventListener('click', async () => {
+    if(!currentUser){
+      alert('Save karne ke liye pehle sign in karein.');
+      return;
+    }
+    saveBtn.disabled = true;
+    const originalLabel = saveBtn.innerHTML;
+    saveBtn.innerHTML = 'Saving...';
+
+    try {
+      const items = serializeCanvas();
+
+      if(!currentBlueprintId){
+        const name = prompt('Blueprint ka naam:', 'Untitled Blueprint') || 'Untitled Blueprint';
+        currentBlueprintName = name;
+        titleEl.textContent = name;
+        const docRef = await addDoc(collection(db, 'users', currentUser.uid, 'blueprints'), {
+          name,
+          items,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+        currentBlueprintId = docRef.id;
+        // URL me id jod dete hain taaki reload/share par wahi blueprint khule
+        const newUrl = window.location.pathname + '?id=' + currentBlueprintId;
+        window.history.replaceState({}, '', newUrl);
+      } else {
+        await updateDoc(doc(db, 'users', currentUser.uid, 'blueprints', currentBlueprintId), {
+          items,
+          updatedAt: serverTimestamp()
+        });
+      }
+      saveBtn.innerHTML = 'Saved ✓';
+      setTimeout(() => { saveBtn.innerHTML = originalLabel; }, 1500);
+    } catch(err){
+      alert('Save nahi ho paya: ' + err.message);
+      saveBtn.innerHTML = originalLabel;
+    } finally {
+      saveBtn.disabled = false;
+    }
+  });
+</script>
+
+</body>
+</html>

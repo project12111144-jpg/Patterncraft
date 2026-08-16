@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pattern Craft — PDF Files</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{ --ink:#1c2340; --sub:#5b6478; --line:#e9ecf7; --pink:#d81159; }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Inter',sans-serif;
+    background:#eef1fb;
+    color:var(--ink);
+  }
+  .topbar{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:14px 16px;
+    background:#fff;
+    border-bottom:1px solid var(--line);
+  }
+  .icon-btn{
+    width:38px;height:38px;
+    border-radius:11px;
+    border:1px solid var(--line);
+    background:#fff;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--ink);
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .topbar h1{
+    font-family:'Poppins',sans-serif;
+    font-size:17px;
+    font-weight:600;
+    margin:0;
+  }
+  .topbar p{
+    font-size:12px;
+    color:var(--sub);
+    margin:1px 0 0;
+  }
+  .wrap{ max-width:640px; margin:0 auto; padding:18px 16px 60px; }
+
+  .pdf-item{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:14px;
+    margin-bottom:12px;
+    touch-action:pan-y;
+    user-select:none;
+  }
+  .pdf-item:active{ background:#fdf3f5; }
+  .pdf-icon{
+    width:44px;height:44px;
+    border-radius:12px;
+    background:#fbe1e6;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .pdf-info{ flex:1; min-width:0; }
+  .pdf-info h3{
+    font-family:'Poppins',sans-serif;
+    font-size:14.5px;
+    margin:0 0 2px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .pdf-info span{
+    font-size:11.5px;
+    color:var(--sub);
+  }
+  .dl-btn{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    background:var(--pink);
+    color:#fff;
+    border:none;
+    padding:9px 14px;
+    border-radius:10px;
+    font-weight:700;
+    font-size:12.5px;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+
+  .pdf-check{
+    width:22px;height:22px;
+    border-radius:7px;
+    border:2px solid var(--line);
+    flex-shrink:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:#fff;
+  }
+  body.select-mode .pdf-check{ display:flex; }
+  body.select-mode .dl-btn{ display:none; }
+  .pdf-item.checked .pdf-check{
+    background:var(--pink);
+    border-color:var(--pink);
+  }
+
+  .action-bar{
+    position:fixed;
+    left:0; right:0; bottom:0;
+    background:#fff;
+    border-top:1px solid var(--line);
+    padding:12px 16px;
+    display:none;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    box-shadow:0 -8px 24px rgba(20,20,50,0.10);
+  }
+  body.select-mode .action-bar{ display:flex; }
+  .action-bar .count{
+    font-size:13px;
+    font-weight:600;
+    color:var(--sub);
+  }
+  .action-bar .btns{ display:flex; gap:8px; }
+  .action-bar button{
+    border:none;
+    border-radius:10px;
+    padding:10px 14px;
+    font-weight:700;
+    font-size:12.5px;
+    cursor:pointer;
+  }
+  .action-bar .cancel-btn{ background:#F2F1FA; color:var(--ink); }
+  .action-bar .download-btn{ background:var(--ink); color:#fff; }
+  .action-bar .delete-btn{ background:#E0356B; color:#fff; }
+  .empty-state{
+    text-align:center;
+    color:var(--sub);
+    font-size:13.5px;
+    padding:60px 20px;
+    line-height:1.6;
+  }
+  .note{
+    background:#fff;
+    border:1px dashed var(--line);
+    border-radius:14px;
+    padding:14px 16px;
+    font-size:12px;
+    color:var(--sub);
+    line-height:1.6;
+    margin-bottom:18px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="icon-btn" id="backBtn" title="Back">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <div>
+      <h1>PDF Files</h1>
+      <p>Apne saved blueprints ko PDF me download karein</p>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="note">Har blueprint ka PDF turant, uske latest design se banta hai. Kisi item ko dabakar rakhein (long-press) ek ya kai blueprints ek saath select karne ke liye.</div>
+    <div id="listWrap">
+      <div class="empty-state">Load ho raha hai...</div>
+    </div>
+  </div>
+
+  <div class="action-bar" id="actionBar">
+    <span class="count" id="selCount">0 selected</span>
+    <div class="btns">
+      <button class="cancel-btn" id="cancelSelectBtn">Cancel</button>
+      <button class="download-btn" id="bulkDownloadBtn">Download</button>
+      <button class="delete-btn" id="bulkDeleteBtn">Delete</button>
+    </div>
+  </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import {
+    getFirestore, collection, query, orderBy, getDocs, doc, deleteDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCD4WU_MFzrgwRxQtvLgk3DByCbGIDoH7I",
+    authDomain: "pattern-craft.firebaseapp.com",
+    projectId: "pattern-craft",
+    storageBucket: "pattern-craft.firebasestorage.app",
+    messagingSenderId: "461067400933",
+    appId: "1:461067400933:web:61b35d13dda8a1f5ba860c",
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  document.getElementById('backBtn').addEventListener('click', () => {
+    window.location.href = 'pattern-craft-home.html?v=' + Date.now();
+  });
+
+  function formatDate(ts){
+    if(!ts) return '';
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    return d.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+  }
+
+  const listWrap = document.getElementById('listWrap');
+  const actionBar = document.getElementById('actionBar');
+  const selCount = document.getElementById('selCount');
+  const cancelSelectBtn = document.getElementById('cancelSelectBtn');
+  const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+  const bulkDownloadBtn = document.getElementById('bulkDownloadBtn');
+
+  const selectedIds = new Set();
+  let currentUserRef = null;
+
+  function updateSelectionUI(){
+    selCount.textContent = selectedIds.size + ' selected';
+    if(selectedIds.size === 0) exitSelectMode();
+  }
+
+  function enterSelectMode(){
+    document.body.classList.add('select-mode');
+  }
+  function exitSelectMode(){
+    document.body.classList.remove('select-mode');
+    selectedIds.clear();
+    document.querySelectorAll('.pdf-item.checked').forEach(el => el.classList.remove('checked'));
+  }
+  cancelSelectBtn.addEventListener('click', exitSelectMode);
+
+  function toggleSelect(el, id){
+    if(selectedIds.has(id)){
+      selectedIds.delete(id);
+      el.classList.remove('checked');
+    } else {
+      selectedIds.add(id);
+      el.classList.add('checked');
+    }
+    updateSelectionUI();
+  }
+
+  bulkDeleteBtn.addEventListener('click', async () => {
+    if(selectedIds.size === 0) return;
+    const ok = confirm(selectedIds.size + ' blueprint(s) delete karne hain? Ye wapas nahi aayenge.');
+    if(!ok) return;
+    for(const id of selectedIds){
+      try {
+        await deleteDoc(doc(db, 'users', currentUserRef.uid, 'blueprints', id));
+        const el = listWrap.querySelector(`[data-id="${id}"]`);
+        if(el) el.remove();
+      } catch(err){}
+    }
+    exitSelectMode();
+    if(!listWrap.querySelector('.pdf-item')){
+      listWrap.innerHTML = '<div class="empty-state">Abhi koi saved blueprint nahi hai.</div>';
+    }
+  });
+
+  bulkDownloadBtn.addEventListener('click', () => {
+    if(selectedIds.size === 0) return;
+    // Har selected blueprint ke liye ek hidden iframe kholte hain — usi me autoexport
+    // chalega aur PDF apne aap download ho jaayega, bina is page se hate hue
+    selectedIds.forEach((id, idx) => {
+      setTimeout(() => {
+        const frame = document.createElement('iframe');
+        frame.style.display = 'none';
+        frame.src = 'pattern-craft-blueprint.html?id=' + id + '&autoexport=1';
+        document.body.appendChild(frame);
+        setTimeout(() => frame.remove(), 8000);
+      }, idx * 700); // thoda gap taaki downloads overlap na karein
+    });
+    exitSelectMode();
+  });
+
+  async function loadBlueprints(user){
+    currentUserRef = user;
+    try {
+      const q = query(collection(db, 'users', user.uid, 'blueprints'), orderBy('updatedAt', 'desc'));
+      const snap = await getDocs(q);
+
+      if(snap.empty){
+        listWrap.innerHTML = '<div class="empty-state">Abhi koi saved blueprint nahi hai.<br>Pehle Home se "New Blueprint" banakar save karein.</div>';
+        return;
+      }
+
+      listWrap.innerHTML = '';
+      snap.forEach(docSnap => {
+        const data = docSnap.data();
+        const id = docSnap.id;
+        const el = document.createElement('div');
+        el.className = 'pdf-item';
+        el.dataset.id = id;
+        el.innerHTML = `
+          <div class="pdf-check">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="pdf-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d81159" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5a1 1 0 001 1h5"/><path d="M6 3h8l5 5v12a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg>
+          </div>
+          <div class="pdf-info">
+            <h3>${data.name || 'Untitled'}</h3>
+            <span>${formatDate(data.updatedAt)}</span>
+          </div>
+          <button class="dl-btn">Download PDF</button>
+        `;
+
+        el.querySelector('.dl-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          window.location.href = 'pattern-craft-blueprint.html?id=' + id + '&autoexport=1';
+        });
+
+        // Normal tap: agar selection mode chal raha hai to select/deselect kare
+        el.addEventListener('click', () => {
+          if(document.body.classList.contains('select-mode')){
+            toggleSelect(el, id);
+          }
+        });
+
+        // Long-press: selection mode shuru kare aur isi item ko select kar de
+        let pressTimer = null;
+        let pressMoved = false;
+        const startPos = { x: 0, y: 0 };
+        el.addEventListener('pointerdown', (e) => {
+          pressMoved = false;
+          startPos.x = e.clientX; startPos.y = e.clientY;
+          pressTimer = setTimeout(() => {
+            if(pressMoved) return;
+            if(!document.body.classList.contains('select-mode')) enterSelectMode();
+            toggleSelect(el, id);
+          }, 500);
+        });
+        el.addEventListener('pointermove', (e) => {
+          if(Math.hypot(e.clientX - startPos.x, e.clientY - startPos.y) > 10){
+            pressMoved = true;
+            clearTimeout(pressTimer);
+          }
+        });
+        el.addEventListener('pointerup', () => clearTimeout(pressTimer));
+        el.addEventListener('pointercancel', () => clearTimeout(pressTimer));
+
+        listWrap.appendChild(el);
+      });
+    } catch(err){
+      listWrap.innerHTML = '<div class="empty-state">Load nahi ho paya: ' + err.message + '</div>';
+    }
+  }
+
+  onAuthStateChanged(auth, (user) => {
+    if(!user){
+      window.location.href = 'pattern-craft-signin-web.html?v=' + Date.now();
+      return;
+    }
+    loadBlueprints(user);
+  });
+</script>
+
+</body>
+</html>
